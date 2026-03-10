@@ -1,6 +1,6 @@
 from backup_method import FolderBackupManager
 from zip_manager import ZipBackupManager
-
+from gui import launch_gui
 
 class BackupConsoleApp:
     def __init__(self):
@@ -85,5 +85,4 @@ class BackupConsoleApp:
 
 
 if __name__ == "__main__":
-    app = BackupConsoleApp()
-    app.run()
+    launch_gui()

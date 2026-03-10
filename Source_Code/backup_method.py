@@ -32,22 +32,6 @@ class BackupVersionChecker:
 
         return sorted(set(backup_entries))
 
-    def get_existing_versions(self, source: Path, destination: Path) -> list[str]:
-        versions = []
-        prefix = f"{source.name}_backup_"
-
-        for item in destination.iterdir():
-            item_name = item.name
-
-            if not item_name.startswith(prefix):
-                continue
-
-            match = re.search(r"_v(.+?)(\.zip)?$", item_name)
-            if match:
-                versions.append(match.group(1))
-
-        return sorted(set(versions))
-
 
 class BackupNameBuilder:
     def build_backup_path(self, source: Path, destination: Path, version: str) -> Path:
