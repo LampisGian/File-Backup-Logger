@@ -1,6 +1,6 @@
 from pathlib import Path
 
-#This class is responsible for validating the source and destination paths, as well as normalizing the version string.
+
 class PathValidator:
     def validate_source(self, source_path: str) -> Path:
         cleaned_source_path = source_path.strip()
@@ -36,7 +36,20 @@ class PathValidator:
 
         return destination
 
-#This class is responsible for checking existing backup versions and building backup folder names based on the source
+    def validate_copy_permissions(self, source: Path, destination: Path) -> None:
+        if not source.exists():
+            raise FileNotFoundError(f"Source path does not exist: {source}")
+
+        if not destination.exists():
+            raise FileNotFoundError(f"Destination path does not exist: {destination}")
+
+        if not source.is_dir():
+            raise NotADirectoryError(f"Source path is not a folder: {source}")
+
+        if not destination.is_dir():
+            raise NotADirectoryError(f"Destination path is not a folder: {destination}")
+
+
 class VersionManager:
     def normalize_version(self, version: str) -> str:
         cleaned_version = version.strip()
@@ -46,16 +59,16 @@ class VersionManager:
 
         return cleaned_version.replace(" ", "-")
 
-#This class is responsible for checking existing backup versions and building backup folder names based on the source folder, destination, and version. It also handles the creation of backups while ensuring that version conflicts are avoided.
+
 class BackupPreparationManager:
     def __init__(self):
         self.path_validator = PathValidator()
         self.version_manager = VersionManager()
 
-    def prepare_source(self, source_path: str):
+    def prepare_source(self, source_path: str) -> Path:
         return self.path_validator.validate_source(source_path)
 
-    def prepare_destination(self, destination_path: str):
+    def prepare_destination(self, destination_path: str) -> Path:
         return self.path_validator.validate_destination(destination_path)
 
     def prepare_version(self, version: str) -> str:
@@ -65,4 +78,5 @@ class BackupPreparationManager:
         source = self.prepare_source(source_path)
         destination = self.prepare_destination(destination_path)
         safe_version = self.prepare_version(version)
+        self.path_validator.validate_copy_permissions(source, destination)
         return source, destination, safe_version

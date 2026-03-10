@@ -1,42 +1,23 @@
 from backup_method import FolderBackupManager
 
-#This class is responsible for managing the console application, including user interaction and orchestrating the backup process.
-#  It prompts the user for the source and destination paths, checks for existing versions, and ensures that a valid version is 
-# provided before creating the backup. It also handles any exceptions that may occur during the process and provides feedback to the user.
+
 class BackupConsoleApp:
     def __init__(self):
         self.backup_manager = FolderBackupManager()
 
-    def ask_version_until_valid(self, source_path: str, destination_path: str) -> str:
-        while True:
-            existing_versions = self.backup_manager.get_existing_versions(
-                source_path,
-                destination_path
-            )
+    def show_existing_versions(self, source_path: str, destination_path: str) -> None:
+        existing_versions = self.backup_manager.get_existing_versions(
+            source_path,
+            destination_path
+        )
 
-            if existing_versions:
-                print("\nExisting versions for this folder:")
-                for version in existing_versions:
-                    print(f"- v{version}")
-                print()
-
-                version = input("Enter a new backup version: ").strip()
-            else:
-                print("\nNo previous versions were found for this folder.")
-                version = input("Enter backup version (press Enter for default v1): ").strip()
-
-            try:
-                if self.backup_manager.is_version_available(
-                    source_path,
-                    destination_path,
-                    version
-                ):
-                    return version
-
-                print("\nThis version already exists. Please enter a different version.\n")
-
-            except Exception as error:
-                print(f"\nError while checking version: {error}\n")
+        if existing_versions:
+            print("\nExisting versions for this folder:")
+            for version in existing_versions:
+                print(f"- v{version}")
+            print()
+        else:
+            print("\nNo previous versions were found for this folder.\n")
 
     def run(self):
         print("=== File Backup Logger ===")
@@ -47,7 +28,9 @@ class BackupConsoleApp:
         ).strip()
 
         try:
-            version = self.ask_version_until_valid(source_path, destination_path)
+            self.show_existing_versions(source_path, destination_path)
+
+            version = input("Enter backup version (press Enter for default v1): ").strip()
 
             backup_path = self.backup_manager.create_backup(
                 source_path,
@@ -58,8 +41,20 @@ class BackupConsoleApp:
             print("\nBackup completed successfully.")
             print(f"Backup created at: {backup_path}")
 
+        except FileNotFoundError as error:
+            print(f"File/Folder Error: {error}")
+
+        except NotADirectoryError as error:
+            print(f"Directory Error: {error}")
+
+        except PermissionError as error:
+            print(f"Permission Error: {error}")
+
+        except ValueError as error:
+            print(f"Validation Error: {error}")
+
         except Exception as error:
-            print(f"Error: {error}")
+            print(f"Unexpected Error: {error}")
 
 
 if __name__ == "__main__":
