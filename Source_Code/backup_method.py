@@ -2,6 +2,7 @@ from pathlib import Path
 from datetime import datetime
 import shutil
 import re
+import time
 
 from general_managers import BackupPreparationManager
 from log_manager import BackupLogger
@@ -62,6 +63,9 @@ class FolderBackupManager:
         self.name_builder = BackupNameBuilder()
         self.logger = BackupLogger()
 
+    def count_files(self, source: Path) -> int:
+        return sum(1 for item in source.rglob("*") if item.is_file())
+
     def get_existing_backups(self, source_path: str, destination_path: str) -> list[str]:
         source = self.preparation_manager.prepare_source(source_path)
         destination = self.preparation_manager.prepare_destination(destination_path)
@@ -76,6 +80,8 @@ class FolderBackupManager:
         source = "UNKNOWN"
         destination = "UNKNOWN"
         safe_version = version.strip() if version.strip() else "1"
+        file_count = 0
+        start_time = time.time()
 
         try:
             source_obj, destination_obj, safe_version = self.preparation_manager.prepare_backup_data(
@@ -86,6 +92,7 @@ class FolderBackupManager:
 
             source = str(source_obj)
             destination = str(destination_obj)
+            file_count = self.count_files(source_obj)
 
             backup_path = self.name_builder.build_backup_path(
                 source_obj,
@@ -95,32 +102,44 @@ class FolderBackupManager:
 
             shutil.copytree(source_obj, backup_path)
 
+            duration = time.time() - start_time
+
             self.logger.write_log(
                 status="SUCCESS",
                 source=source,
                 destination=destination,
                 version=safe_version,
-                message=f"Backup created successfully at {backup_path}"
+                file_count=file_count,
+                duration=duration,
+                message=f"Folder backup created successfully at {backup_path}"
             )
 
             return backup_path
 
         except PermissionError:
+            duration = time.time() - start_time
+
             self.logger.write_log(
                 status="FAILED",
                 source=source,
                 destination=destination,
                 version=safe_version,
+                file_count=file_count,
+                duration=duration,
                 message="Permission denied during backup process."
             )
             raise PermissionError("Permission denied. Check folder access permissions.")
 
         except Exception as error:
+            duration = time.time() - start_time
+
             self.logger.write_log(
                 status="FAILED",
                 source=source,
                 destination=destination,
                 version=safe_version,
+                file_count=file_count,
+                duration=duration,
                 message=str(error)
             )
             raise

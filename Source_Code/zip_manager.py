@@ -1,6 +1,7 @@
 from pathlib import Path
 from datetime import datetime
 import zipfile
+import time
 
 from general_managers import BackupPreparationManager
 from log_manager import BackupLogger
@@ -19,10 +20,15 @@ class ZipBackupManager:
         self.name_builder = ZipBackupNameBuilder()
         self.logger = BackupLogger()
 
+    def count_files(self, source: Path) -> int:
+        return sum(1 for item in source.rglob("*") if item.is_file())
+
     def create_zip_backup(self, source_path: str, destination_path: str, version: str) -> Path:
         source = "UNKNOWN"
         destination = "UNKNOWN"
         safe_version = version.strip() if version.strip() else "1"
+        file_count = 0
+        start_time = time.time()
 
         try:
             source_obj, destination_obj, safe_version = self.preparation_manager.prepare_backup_data(
@@ -33,6 +39,7 @@ class ZipBackupManager:
 
             source = str(source_obj)
             destination = str(destination_obj)
+            file_count = self.count_files(source_obj)
 
             zip_backup_path = self.name_builder.build_zip_backup_path(
                 source_obj,
@@ -46,32 +53,44 @@ class ZipBackupManager:
                         archive_name = file_path.relative_to(source_obj.parent)
                         zip_file.write(file_path, arcname=archive_name)
 
+            duration = time.time() - start_time
+
             self.logger.write_log(
                 status="SUCCESS",
                 source=source,
                 destination=destination,
                 version=safe_version,
+                file_count=file_count,
+                duration=duration,
                 message=f"ZIP backup created successfully at {zip_backup_path}"
             )
 
             return zip_backup_path
 
         except PermissionError:
+            duration = time.time() - start_time
+
             self.logger.write_log(
                 status="FAILED",
                 source=source,
                 destination=destination,
                 version=safe_version,
+                file_count=file_count,
+                duration=duration,
                 message="Permission denied during ZIP backup process."
             )
             raise PermissionError("Permission denied. Check folder access permissions.")
 
         except Exception as error:
+            duration = time.time() - start_time
+
             self.logger.write_log(
                 status="FAILED",
                 source=source,
                 destination=destination,
                 version=safe_version,
+                file_count=file_count,
+                duration=duration,
                 message=str(error)
             )
             raise

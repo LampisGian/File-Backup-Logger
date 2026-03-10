@@ -10,6 +10,8 @@ class LogFormatter:
         source: str,
         destination: str,
         version: str,
+        file_count: int,
+        duration: float,
         message: str
     ) -> str:
         return (
@@ -18,6 +20,8 @@ class LogFormatter:
             f"SOURCE={source} | "
             f"DESTINATION={destination} | "
             f"VERSION=v{version} | "
+            f"FILES={file_count} | "
+            f"DURATION={duration:.2f}s | "
             f"MESSAGE={message}\n"
         )
 
@@ -35,6 +39,8 @@ class BackupLogger:
         source: str,
         destination: str,
         version: str,
+        file_count: int,
+        duration: float,
         message: str
     ) -> None:
         backup_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -45,6 +51,8 @@ class BackupLogger:
             source=source,
             destination=destination,
             version=version,
+            file_count=file_count,
+            duration=duration,
             message=message
         )
 
