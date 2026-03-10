@@ -8,19 +8,40 @@ from log_manager import BackupLogger
 
 
 class BackupVersionChecker:
+    def get_existing_backups(self, source: Path, destination: Path) -> list[str]:
+        backup_entries = []
+        prefix = f"{source.name}_backup_"
+
+        for item in destination.iterdir():
+            item_name = item.name
+
+            if not item_name.startswith(prefix):
+                continue
+
+            match = re.search(r"_v(.+?)(\.zip)?$", item_name)
+            if not match:
+                continue
+
+            version = match.group(1)
+
+            if item.is_dir():
+                backup_entries.append(f"v{version} (folder)")
+            elif item.is_file() and item.suffix == ".zip":
+                backup_entries.append(f"v{version} (zip)")
+
+        return sorted(set(backup_entries))
+
     def get_existing_versions(self, source: Path, destination: Path) -> list[str]:
         versions = []
         prefix = f"{source.name}_backup_"
-        version_pattern = re.compile(r"_v(.+)$")
 
         for item in destination.iterdir():
-            if not item.is_dir():
+            item_name = item.name
+
+            if not item_name.startswith(prefix):
                 continue
 
-            if not item.name.startswith(prefix):
-                continue
-
-            match = version_pattern.search(item.name)
+            match = re.search(r"_v(.+?)(\.zip)?$", item_name)
             if match:
                 versions.append(match.group(1))
 
@@ -40,6 +61,11 @@ class FolderBackupManager:
         self.version_checker = BackupVersionChecker()
         self.name_builder = BackupNameBuilder()
         self.logger = BackupLogger()
+
+    def get_existing_backups(self, source_path: str, destination_path: str) -> list[str]:
+        source = self.preparation_manager.prepare_source(source_path)
+        destination = self.preparation_manager.prepare_destination(destination_path)
+        return self.version_checker.get_existing_backups(source, destination)
 
     def get_existing_versions(self, source_path: str, destination_path: str) -> list[str]:
         source = self.preparation_manager.prepare_source(source_path)
