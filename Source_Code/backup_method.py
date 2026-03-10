@@ -4,7 +4,8 @@ import shutil
 import re
 from general_managers import BackupPreparationManager
 
-
+#This class is responsible for checking existing backup versions and building backup folder names based on the source 
+#folder, destination, and version. It also handles the creation of backups while ensuring that version conflicts are avoided.
 class BackupVersionChecker:
     def get_existing_versions(self, source: Path, destination: Path) -> list[str]:
         versions = []
@@ -27,14 +28,17 @@ class BackupVersionChecker:
     def version_exists(self, source: Path, destination: Path, version: str) -> bool:
         return version in self.get_existing_versions(source, destination)
 
-
+#This class is responsible for building the backup folder name based on the source folder, destination, and version. 
+#It uses the current timestamp to ensure that each backup has a unique name, even if the same version is used multiple times.
 class BackupNameBuilder:
     def build_backup_path(self, source: Path, destination: Path, version: str) -> Path:
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         backup_folder_name = f"{source.name}_backup_{timestamp}_v{version}"
         return destination / backup_folder_name
 
-
+#This class is responsible for managing the backup process, including validating the source and destination paths, 
+# checking for existing versions, and creating the backup. It uses the BackupPreparationManager to prepare the 
+# paths and the BackupVersionChecker to ensure that version conflicts are avoided.
 class FolderBackupManager:
     def __init__(self):
         self.preparation_manager = BackupPreparationManager()

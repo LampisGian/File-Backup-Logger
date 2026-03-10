@@ -1,6 +1,6 @@
 from pathlib import Path
 
-
+#This class is responsible for validating the source and destination paths, as well as normalizing the version string.
 class PathValidator:
     def validate_source(self, source_path: str) -> Path:
         cleaned_source_path = source_path.strip()
@@ -36,7 +36,7 @@ class PathValidator:
 
         return destination
 
-
+#This class is responsible for checking existing backup versions and building backup folder names based on the source
 class VersionManager:
     def normalize_version(self, version: str) -> str:
         cleaned_version = version.strip()
@@ -46,7 +46,7 @@ class VersionManager:
 
         return cleaned_version.replace(" ", "-")
 
-
+#This class is responsible for checking existing backup versions and building backup folder names based on the source folder, destination, and version. It also handles the creation of backups while ensuring that version conflicts are avoided.
 class BackupPreparationManager:
     def __init__(self):
         self.path_validator = PathValidator()

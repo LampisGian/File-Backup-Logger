@@ -1,6 +1,8 @@
 from backup_method import FolderBackupManager
 
-
+#This class is responsible for managing the console application, including user interaction and orchestrating the backup process.
+#  It prompts the user for the source and destination paths, checks for existing versions, and ensures that a valid version is 
+# provided before creating the backup. It also handles any exceptions that may occur during the process and provides feedback to the user.
 class BackupConsoleApp:
     def __init__(self):
         self.backup_manager = FolderBackupManager()
