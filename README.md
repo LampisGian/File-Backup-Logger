@@ -1,25 +1,62 @@
-#File Backup Logger
+# File Backup Logger
 
 ## Description
-A program that backs up files and directories with versioning, logs the operations locally, and includes a GUI. Alternatively, the program can be written in C++ if you're more comfortable working with it.
+File Backup Logger is a desktop backup application developed with Python and `tkinter`. It allows the user to create backups of folders either as normal copied folders or as compressed ZIP archives.  
+
+The application provides a graphical user interface with drag-and-drop support, backup history display, logging, configuration storage, and reminder-based backup interval settings, offering a practical and user-friendly way to manage folder backups.
+---
 
 ## Getting Started
-1. Clone this repository or download the files.
-2. Install required packages if necessary.
-3. Run the `main.py` or `main.cpp` file to get started.
 
-Keep in mind that the code must be written in OOP.
+There are two ways to run the application:
 
-## Tasks
-- Research how to copy folders in Python using `shutil`. Create initial project folder and file structure.
-- Implement basic folder selection (manually or via `input()`). Write code to copy folder contents to a backup location.
-- Add timestamp and version of the program is backuping an software directory to backup folder names (e.g., backup_2025-05-01_v227-3-3).
-- Add error handling (e.g., non-existent folder, permission denied). Start writing a simple .log file (backup time, status).
-- Clean up code. Create `backup.py` and move reusable functions there. Test with multiple folders and large files.
-- Add ZIP compression to backups using `zipfile`. Let user choose between zipped or plain copy.
-- Improve the log format. Add file count and backup duration.
-- Add tkinter GUI to select source/destination folders and trigger backup.
-- Add config file (e.g., .json) to store user preferences (folders, backup interval).
-- Final testing. Create README with instructions and screenshots. Submit as Git repo.
+### 1) macOS app (`.app`)
 
-## Estimated time to work 2 weeks
+- Download **File Backup Logger.zip**
+- Unzip the file
+- Open the generated **.app** to launch the application directly on macOS
+
+> **Note:** To use the macOS application, the user should first download or clone the full project folder and then unzip the provided application file. The app stores its configuration and log data in the standard `config.json` file and log file used by the project.
+
+---
+
+### 2) Run from source (Python)
+
+- Download (or clone) the full project folder
+- Open a terminal in the project directory
+- Move into the `Source_Code` folder
+- Run the application:
+
+```bash
+python main.py
+# or
+python3 main.py
+```
+
+## User Interface Overview (Screenshots)
+![Screenshot](Screenshots/main_screen.png)
+
+The application supports **drag-and-drop** functionality through the `tkinterdnd2` Python library, allowing the user to easily drop a folder into the designated area in order to select the **source folder** for the backup. Alternatively, the source folder can also be selected manually using the **Browse** button.  
+
+To choose the **destination folder** of the backup, the user should use the corresponding **Browse** button and select the desired location where the backup will be stored.
+
+![Screenshot](Screenshots/folders.png)
+
+
+After that, the user can choose the **type of backup**, which can be created either as a **folder backup** or as a **ZIP file**. The application also provides a field where the user can enter the **version** of the backup.  
+
+On the right side of the interface, there is a panel that displays the **existing backups** of the selected folder inside the backup directory, showing them based on their **version** and **type/extension**.
+
+![Screenshot](Screenshots/folder-zip.png)
+
+At the bottom of the interface, the appropriate action buttons are provided, together with a **status area** that informs the user whether a backup is currently in progress or has been completed successfully. In addition, there is a **Settings** button, which allows the user to manage and customize the application preferences.
+
+![Screenshot](Screenshots/buttons.png)
+
+![Screenshot](Screenshots/settings.png)
+
+The application also provides several **notifications** related to system actions, such as backup completion, backup errors, reminders, and the successful saving of settings.
+
+![Screenshot](Screenshots/not1.png)
+
+![Screenshot](Screenshots/not2.png)
