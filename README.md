@@ -2,8 +2,8 @@
 
 ## Description
 File Backup Logger is a desktop backup application developed with Python and `tkinter`. It allows the user to create backups of folders either as normal copied folders or as compressed ZIP archives.  
-The application provides a graphical user interface with drag-and-drop support, backup history display, logging, configuration storage, and reminder-based backup interval settings, offering a practical and user-friendly way to manage folder backups.
----
+The application provides a graphical user interface with drag-and-drop support, backup history display, 
+logging, configuration storage, and reminder-based backup interval settings, offering a practical and user-friendly way to manage folder backups.
 
 ## Getting Started
 
