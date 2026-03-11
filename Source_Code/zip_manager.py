@@ -2,18 +2,18 @@ from pathlib import Path
 from datetime import datetime
 import zipfile
 import time
-
 from general_managers import BackupPreparationManager
 from log_manager import BackupLogger
 
-
+#This class is responsible for creating the name of the zip backup file with the version and the date and time of the backup.
 class ZipBackupNameBuilder:
     def build_zip_backup_path(self, source: Path, destination: Path, version: str) -> Path:
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         zip_file_name = f"{source.name}_backup_{timestamp}_v{version}.zip"
         return destination / zip_file_name
 
-
+#This class is responsible for creating the backup of the folder and compress it into a zip file  and log the process 
+#in the log file with all the details of the backup.
 class ZipBackupManager:
     def __init__(self):
         self.preparation_manager = BackupPreparationManager()

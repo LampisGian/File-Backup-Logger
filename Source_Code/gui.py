@@ -1,10 +1,11 @@
 import threading
 from pathlib import Path
+from datetime import datetime, timedelta
 import tkinter as tk
 from tkinter import ttk, filedialog
-
 from backup_method import FolderBackupManager
 from zip_manager import ZipBackupManager
+from personal_setttings import ConfigManager
 
 try:
     from tkinterdnd2 import DND_FILES, TkinterDnD
@@ -12,7 +13,9 @@ except ImportError:
     DND_FILES = None
     TkinterDnD = None
 
-
+#This class is responsible for creating the custom notification windows with the appropriate colours and icons based on the type of notification 
+# (success, error, info) and also is responsible for centering the notification window on the screen and handling the 
+# user interactions with the notification such as closing it by clicking the close button or pressing the escape key or the enter key.
 class CustomNotification(tk.Toplevel):
     def __init__(self, parent, title: str, message: str, notification_type: str = "info"):
         super().__init__(parent)
@@ -29,10 +32,10 @@ class CustomNotification(tk.Toplevel):
         accent_map = {
             "success": ("#22c55e", "✅"),
             "error": ("#ef4444", "✖"),
-            "info": ("#3b82f6", "ℹ")
+            "info": ("#3b82f6", "ℹ️")
         }
 
-        accent, icon = accent_map.get(notification_type, ("#3b82f6", "ℹ"))
+        accent, icon = accent_map.get(notification_type, ("#3b82f6", "ℹ️"))
 
         self.configure(bg=bg_main)
 
@@ -92,7 +95,7 @@ class CustomNotification(tk.Toplevel):
             body,
             text=message,
             justify="left",
-            wraplength=420,
+            wraplength=440,
             font=("Helvetica", 10),
             bg=card_bg,
             fg=text_secondary
@@ -147,6 +150,245 @@ class CustomNotification(tk.Toplevel):
 
         self.geometry(f"{window_w}x{window_h}+{x}+{y}")
 
+#This class is responsible for creating the settings window where the user can change the default destination folder, 
+# the default backup type and the backup reminder interval and also is responsible for saving the settings in the config file 
+# and updating the GUI with the new settings when the user saves them.
+class SettingsWindow(tk.Toplevel):
+    def __init__(self, parent, config_manager: ConfigManager, on_save_callback):
+        super().__init__(parent)
+        self.title("Settings")
+        self.transient(parent)
+        self.grab_set()
+        self.resizable(False, False)
+        self.configure(bg="#141414")
+
+        self.config_manager = config_manager
+        self.on_save_callback = on_save_callback
+
+        preferences = self.config_manager.get_preferences()
+
+        self.default_destination_var = tk.StringVar(
+            value=preferences.get("default_destination_folder", "")
+        )
+        self.default_backup_type_var = tk.StringVar(
+            value=preferences.get("default_backup_type", "folder")
+        )
+        self.backup_interval_var = tk.StringVar(
+            value=preferences.get("backup_interval", "manual")
+        )
+
+        self._build_ui()
+        self.update_idletasks()
+        self._center(parent)
+
+    def _build_ui(self):
+        container = tk.Frame(self, bg="#141414", padx=20, pady=20)
+        container.pack(fill="both", expand=True)
+
+        tk.Label(
+            container,
+            text="⚙️ Settings",
+            bg="#141414",
+            fg="#f5f5f5",
+            font=("Helvetica", 16, "bold")
+        ).grid(row=0, column=0, columnspan=3, sticky="w", pady=(0, 16))
+
+        tk.Label(
+            container,
+            text="Default destination folder",
+            bg="#141414",
+            fg="#d1d5db",
+            font=("Helvetica", 10, "bold")
+        ).grid(row=1, column=0, columnspan=3, sticky="w", pady=(0, 6))
+
+        destination_entry = tk.Entry(
+            container,
+            textvariable=self.default_destination_var,
+            bg="#f3f4f6",
+            fg="#111111",
+            relief="flat",
+            font=("Helvetica", 10),
+            width=42,
+            insertbackground="#111111"
+        )
+        destination_entry.grid(row=2, column=0, columnspan=2, sticky="ew", padx=(0, 10), pady=(0, 14))
+
+        browse_button = tk.Label(
+            container,
+            text="📂 Browse",
+            bg="#3a3a3a",
+            fg="white",
+            font=("Helvetica", 10, "bold"),
+            cursor="hand2",
+            padx=16,
+            pady=8
+        )
+        browse_button.grid(row=2, column=2, sticky="ew", pady=(0, 14))
+        browse_button.bind("<Button-1>", lambda event: self._browse_default_destination())
+        browse_button.bind("<Enter>", lambda event: browse_button.config(bg="#525252"))
+        browse_button.bind("<Leave>", lambda event: browse_button.config(bg="#3a3a3a"))
+
+        tk.Label(
+            container,
+            text="Default backup type",
+            bg="#141414",
+            fg="#d1d5db",
+            font=("Helvetica", 10, "bold")
+        ).grid(row=3, column=0, columnspan=3, sticky="w", pady=(0, 6))
+
+        backup_type_frame = tk.Frame(container, bg="#141414")
+        backup_type_frame.grid(row=4, column=0, columnspan=3, sticky="w", pady=(0, 14))
+
+        tk.Radiobutton(
+            backup_type_frame,
+            text="📁 Folder",
+            variable=self.default_backup_type_var,
+            value="folder",
+            bg="#141414",
+            fg="#e5e5e5",
+            activebackground="#141414",
+            activeforeground="#e5e5e5",
+            selectcolor="#1f1f1f",
+            highlightthickness=0,
+            bd=0,
+            relief="flat",
+            font=("Helvetica", 10),
+            cursor="hand2"
+        ).pack(side="left", padx=(0, 18))
+
+        tk.Radiobutton(
+            backup_type_frame,
+            text="🗜️ ZIP",
+            variable=self.default_backup_type_var,
+            value="zip",
+            bg="#141414",
+            fg="#e5e5e5",
+            activebackground="#141414",
+            activeforeground="#e5e5e5",
+            selectcolor="#1f1f1f",
+            highlightthickness=0,
+            bd=0,
+            relief="flat",
+            font=("Helvetica", 10),
+            cursor="hand2"
+        ).pack(side="left")
+
+        tk.Label(
+            container,
+            text="Backup reminder interval",
+            bg="#141414",
+            fg="#d1d5db",
+            font=("Helvetica", 10, "bold")
+        ).grid(row=5, column=0, columnspan=3, sticky="w", pady=(0, 6))
+
+        interval_frame = tk.Frame(container, bg="#141414")
+        interval_frame.grid(row=6, column=0, columnspan=3, sticky="w", pady=(0, 16))
+
+        for label, value in [
+            ("Manual", "manual"),
+            ("Daily", "daily"),
+            ("Weekly", "weekly")
+        ]:
+            tk.Radiobutton(
+                interval_frame,
+                text=label,
+                variable=self.backup_interval_var,
+                value=value,
+                bg="#141414",
+                fg="#e5e5e5",
+                activebackground="#141414",
+                activeforeground="#e5e5e5",
+                selectcolor="#1f1f1f",
+                highlightthickness=0,
+                bd=0,
+                relief="flat",
+                font=("Helvetica", 10),
+                cursor="hand2"
+            ).pack(side="left", padx=(0, 18))
+
+        hint_label = tk.Label(
+            container,
+            text="Reminder only — it does not run automatic backups in the background.",
+            bg="#141414",
+            fg="#9ca3af",
+            font=("Helvetica", 9)
+        )
+        hint_label.grid(row=7, column=0, columnspan=3, sticky="w", pady=(0, 16))
+
+        button_frame = tk.Frame(container, bg="#141414")
+        button_frame.grid(row=8, column=0, columnspan=3, sticky="e")
+
+        reset_label = tk.Label(
+            button_frame,
+            text="Reset",
+            bg="#3a3a3a",
+            fg="white",
+            font=("Helvetica", 10, "bold"),
+            cursor="hand2",
+            padx=16,
+            pady=8
+        )
+        reset_label.pack(side="left", padx=(0, 10))
+        reset_label.bind("<Button-1>", lambda event: self._reset_defaults())
+        reset_label.bind("<Enter>", lambda event: reset_label.config(bg="#525252"))
+        reset_label.bind("<Leave>", lambda event: reset_label.config(bg="#3a3a3a"))
+
+        save_label = tk.Label(
+            button_frame,
+            text="Save",
+            bg="#22c55e",
+            fg="white",
+            font=("Helvetica", 10, "bold"),
+            cursor="hand2",
+            padx=18,
+            pady=8
+        )
+        save_label.pack(side="left")
+        save_label.bind("<Button-1>", lambda event: self._save_settings())
+        save_label.bind("<Enter>", lambda event: save_label.config(bg="#16a34a"))
+        save_label.bind("<Leave>", lambda event: save_label.config(bg="#22c55e"))
+
+    def _browse_default_destination(self):
+        folder = filedialog.askdirectory(title="Select default destination folder")
+        if folder:
+            self.default_destination_var.set(folder)
+
+    def _reset_defaults(self):
+        self.default_destination_var.set("")
+        self.default_backup_type_var.set("folder")
+        self.backup_interval_var.set("manual")
+
+    def _save_settings(self):
+        self.config_manager.update_preferences(
+            default_destination_folder=self.default_destination_var.get().strip(),
+            default_backup_type=self.default_backup_type_var.get().strip(),
+            backup_interval=self.backup_interval_var.get().strip()
+        )
+        self.on_save_callback()
+        self.destroy()
+
+    def _center(self, parent):
+        parent.update_idletasks()
+
+        parent_x = parent.winfo_rootx()
+        parent_y = parent.winfo_rooty()
+        parent_w = parent.winfo_width()
+        parent_h = parent.winfo_height()
+
+        window_w = self.winfo_reqwidth()
+        window_h = self.winfo_reqheight()
+
+        x = parent_x + (parent_w // 2) - (window_w // 2)
+        y = parent_y + (parent_h // 2) - (window_h // 2)
+
+        self.geometry(f"{window_w}x{window_h}+{x}+{y}")
+
+#This class creates the main UI of the app with the appropriate buttons and spaces for choosing the source and destination folders and 
+# the version of the backup and also is responsible for handling the user interactions with the UI such as clicking the buttons, 
+# dragging and dropping folders and showing the notifications.
+#Also this class is responsible for loading the settings of the user from the config file and setting the values as defaults 
+#Also based on the interval it checks if the user needs a reminder to make a backup and shows the notification if needed and also is responsible for 
+# refreshing the list of existing backups when the user changes the source or destination folders.
 class BackupGUI:
     def __init__(self, root: tk.Tk):
         self.root = root
@@ -157,20 +399,23 @@ class BackupGUI:
 
         self.folder_backup_manager = FolderBackupManager()
         self.zip_backup_manager = ZipBackupManager()
+        self.config_manager = ConfigManager()
 
         self.project_root = Path(__file__).resolve().parent.parent
         self.default_backups_path = self.project_root / "Backups"
         self.default_backups_path.mkdir(parents=True, exist_ok=True)
 
         self.source_var = tk.StringVar()
-        self.destination_var = tk.StringVar(value=str(self.default_backups_path))
+        self.destination_var = tk.StringVar()
         self.version_var = tk.StringVar()
         self.backup_type_var = tk.StringVar(value="folder")
         self.status_var = tk.StringVar(value="Ready.")
 
         self._configure_styles()
         self._build_ui()
-        self._refresh_existing_backups()        
+        self._load_config_into_gui()
+        self._refresh_existing_backups()
+        self.root.after(300, self._check_backup_reminder)
 
     def _configure_styles(self):
         style = ttk.Style()
@@ -366,7 +611,7 @@ class BackupGUI:
             style="Modern.TLabel"
         ).grid(row=2, column=0, sticky="w", pady=(0, 6), padx=(0, 8))
 
-        folder_radio = tk.Radiobutton(
+        tk.Radiobutton(
             options_frame,
             text="📁 Folder backup",
             variable=self.backup_type_var,
@@ -382,10 +627,9 @@ class BackupGUI:
             font=("Helvetica", 10),
             anchor="w",
             cursor="hand2"
-        )
-        folder_radio.grid(row=2, column=1, sticky="w", pady=(0, 6))
+        ).grid(row=2, column=1, sticky="w", pady=(0, 6))
 
-        zip_radio = tk.Radiobutton(
+        tk.Radiobutton(
             options_frame,
             text="🗜️ ZIP backup",
             variable=self.backup_type_var,
@@ -401,8 +645,7 @@ class BackupGUI:
             font=("Helvetica", 10),
             anchor="w",
             cursor="hand2"
-        )
-        zip_radio.grid(row=3, column=1, sticky="w")
+        ).grid(row=3, column=1, sticky="w")
 
         existing_frame = ttk.LabelFrame(
             content,
@@ -445,6 +688,13 @@ class BackupGUI:
             command=self._refresh_existing_backups
         ).grid(row=0, column=1, sticky="w", padx=(10, 0))
 
+        ttk.Button(
+            controls_frame,
+            text="⚙️ Settings",
+            style="Secondary.TButton",
+            command=self._open_settings
+        ).grid(row=0, column=2, sticky="w", padx=(10, 0))
+
         status_card = ttk.Frame(outer, style="Card.TFrame")
         status_card.grid(row=4, column=0, sticky="ew", pady=(0, 4))
         status_card.columnconfigure(0, weight=1)
@@ -464,6 +714,108 @@ class BackupGUI:
 
         self.source_var.trace_add("write", lambda *args: self._refresh_existing_backups())
 
+    def _load_config_into_gui(self):
+        preferences = self.config_manager.get_preferences()
+        last_used = self.config_manager.get_last_used()
+
+        default_destination = preferences.get("default_destination_folder", "").strip()
+        if default_destination:
+            self.destination_var.set(default_destination)
+        else:
+            self.destination_var.set(str(self.default_backups_path))
+
+        self.backup_type_var.set(
+            preferences.get("default_backup_type", "folder")
+        )
+
+        last_source = last_used.get("last_source_folder", "").strip()
+        if last_source:
+            self.source_var.set(last_source)
+
+        last_destination = last_used.get("last_destination_folder", "").strip()
+        if last_destination:
+            self.destination_var.set(last_destination)
+
+        last_version = last_used.get("last_version", "").strip()
+        if last_version:
+            self.version_var.set(last_version)
+
+    def _save_last_used_to_config(self):
+        self.config_manager.update_last_used(
+            last_source_folder=self.source_var.get().strip(),
+            last_destination_folder=self.destination_var.get().strip(),
+            last_version=self.version_var.get().strip()
+        )
+
+    def _save_successful_backup_time(self):
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.config_manager.update_last_successful_backup_time(current_time)
+
+    def _check_backup_reminder(self):
+        preferences = self.config_manager.get_preferences()
+        backup_state = self.config_manager.get_backup_state()
+
+        interval = preferences.get("backup_interval", "manual").strip()
+        last_backup_time = backup_state.get("last_successful_backup_time", "").strip()
+
+        if interval == "manual":
+            return
+
+        if not last_backup_time:
+            self._show_notification(
+                "Backup Reminder",
+                "No successful backup has been recorded yet. You may want to create one now.",
+                "info"
+            )
+            return
+
+        try:
+            last_backup_datetime = datetime.strptime(last_backup_time, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            return
+
+        now = datetime.now()
+
+        if interval == "daily":
+            next_backup_due = last_backup_datetime + timedelta(days=1)
+        elif interval == "weekly":
+            next_backup_due = last_backup_datetime + timedelta(weeks=1)
+        else:
+            return
+
+        if now >= next_backup_due:
+            self._show_notification(
+                "Backup Reminder",
+                f"Your last successful backup was on {last_backup_time}.\nIt is time to create a new backup.",
+                "info"
+            )
+
+    def _apply_settings_to_gui(self):
+        preferences = self.config_manager.get_preferences()
+
+        default_destination = preferences.get("default_destination_folder", "").strip()
+        default_backup_type = preferences.get("default_backup_type", "folder").strip()
+
+        if default_destination:
+            self.destination_var.set(default_destination)
+        else:
+            self.destination_var.set(str(self.default_backups_path))
+
+        self.backup_type_var.set(default_backup_type)
+        self._refresh_existing_backups()
+        self._show_notification(
+            "Settings Saved",
+            "Your settings were updated successfully.",
+            "success"
+        )
+
+    def _open_settings(self):
+        SettingsWindow(
+            self.root,
+            self.config_manager,
+            self._apply_settings_to_gui
+        )
+
     def _show_notification(self, title: str, message: str, notification_type: str):
         CustomNotification(self.root, title, message, notification_type)
 
@@ -471,11 +823,13 @@ class BackupGUI:
         folder = filedialog.askdirectory(title="Select source folder")
         if folder:
             self.source_var.set(folder)
+            self._save_last_used_to_config()
 
     def _browse_destination_folder(self):
         folder = filedialog.askdirectory(title="Select destination folder")
         if folder:
             self.destination_var.set(folder)
+            self._save_last_used_to_config()
             self._refresh_existing_backups()
 
     def _handle_drop(self, event):
@@ -490,6 +844,7 @@ class BackupGUI:
 
         if path_obj.exists() and path_obj.is_dir():
             self.source_var.set(str(path_obj.resolve()))
+            self._save_last_used_to_config()
             self._set_status(f"Source folder set: {path_obj.name}", "info")
         else:
             self._show_notification("Invalid Drop", "Please drop a valid folder.", "error")
@@ -550,6 +905,7 @@ class BackupGUI:
             )
             return
 
+        self._save_last_used_to_config()
         self._set_running_state(True)
         self._set_status("Backup in progress...", "running")
 
@@ -582,6 +938,8 @@ class BackupGUI:
 
     def _on_backup_success(self, backup_path):
         self._set_running_state(False)
+        self._save_last_used_to_config()
+        self._save_successful_backup_time()
         self._set_status(f"Backup completed successfully: {backup_path}", "success")
         self._refresh_existing_backups()
         self._show_notification(

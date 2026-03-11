@@ -1,6 +1,7 @@
 from pathlib import Path
 
-
+#This class is responsible for validating the path of the source and the destination folders 
+#also checks if the destination is a folder and if the source and destination folders have the permissions to copy the files from the source to the destination.
 class PathValidator:
     def validate_source(self, source_path: str) -> Path:
         cleaned_source_path = source_path.strip()
@@ -49,7 +50,7 @@ class PathValidator:
         if not destination.is_dir():
             raise NotADirectoryError(f"Destination path is not a folder: {destination}")
 
-
+#This class is responsible for normalizing the version of the backup by removing any leading or trailing spaces and replacing any spaces in the version with hyphens.
 class VersionManager:
     def normalize_version(self, version: str) -> str:
         cleaned_version = version.strip()
@@ -59,7 +60,7 @@ class VersionManager:
 
         return cleaned_version.replace(" ", "-")
 
-
+#This class is responsible for preparing the data for the backup process by validating the source and destination paths and normalizing the version of the backup.
 class BackupPreparationManager:
     def __init__(self):
         self.path_validator = PathValidator()

@@ -1,7 +1,7 @@
 from pathlib import Path
 from datetime import datetime
 
-
+#This class is responsible for formatting the log entries in a consistent and readable format before writing them to the log file.
 class LogFormatter:
     def format_log_entry(
         self,
@@ -25,7 +25,7 @@ class LogFormatter:
             f"MESSAGE={message}\n"
         )
 
-
+#This class is responsible for writing the log entries to the log file with all the details of the backup process such as the status, source, destination, version, number of files, duration and a custom message.
 class BackupLogger:
     def __init__(self):
         self.logs_folder = Path(__file__).resolve().parent / "logs"

@@ -7,7 +7,8 @@ import time
 from general_managers import BackupPreparationManager
 from log_manager import BackupLogger
 
-
+#This class is responsible for checking the existing backup versions of each folder in any kind of backup method .
+#and show the version with the type of backup (folder or zip) to the user.
 class BackupVersionChecker:
     def get_existing_backups(self, source: Path, destination: Path) -> list[str]:
         backup_entries = []
@@ -32,14 +33,14 @@ class BackupVersionChecker:
 
         return sorted(set(backup_entries))
 
-
+#This class is responsible for creating the name of the backup folder with the version and the date and time of the backup.
 class BackupNameBuilder:
     def build_backup_path(self, source: Path, destination: Path, version: str) -> Path:
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         backup_folder_name = f"{source.name}_backup_{timestamp}_v{version}"
         return destination / backup_folder_name
 
-
+#This class is responsible for creating the backup of the folder and log the process in the log file with all the details of the backup.
 class FolderBackupManager:
     def __init__(self):
         self.preparation_manager = BackupPreparationManager()
