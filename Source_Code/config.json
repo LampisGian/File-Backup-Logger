@@ -1,15 +1,15 @@
 {
     "preferences": {
-        "default_destination_folder": "/Users/lampis/Documents/GitHub/File-Backup-Logger/Backups",
-        "default_backup_type": "zip",
-        "backup_interval": "daily"
+        "default_destination_folder": "",
+        "default_backup_type": "folder",
+        "backup_interval": "manual"
     },
     "last_used": {
-        "last_source_folder": "/Users/lampis/Documents/GitHub/File-Backup-Logger/Backups",
+        "last_source_folder": "/Users/lampis/Documents/GitHub/File-Backup-Logger/Test",
         "last_destination_folder": "/Users/lampis/Documents/GitHub/File-Backup-Logger/Backups",
-        "last_version": "34"
+        "last_version": "234"
     },
     "backup_state": {
-        "last_successful_backup_time": "2026-03-11 11:05:51"
+        "last_successful_backup_time": "2026-03-11 11:29:22"
     }
 }
