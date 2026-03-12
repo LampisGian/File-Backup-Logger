@@ -60,3 +60,5 @@ The application also provides several **notifications** related to system action
 ![Screenshot](Screenshots/not1.png)
 
 ![Screenshot](Screenshots/not2.png)
+
+![Screenshot](Screenshots/reminder.png)
